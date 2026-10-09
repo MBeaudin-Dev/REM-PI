@@ -19,12 +19,14 @@ class RelayHardware:
     RELAY_MODE_PIN = 29
 
     def __init__(self):
+        # Imported here so importing this module doesn't need a Pi.
         import RPi.GPIO as GPIO
 
         self._gpio = GPIO
         self._gpio.setmode(GPIO.BOARD)
         self._gpio.setup(self.RELAY_ENABLE_PIN, GPIO.OUT)
         self._gpio.setup(self.RELAY_MODE_PIN, GPIO.OUT)
+        # Start in the safe state.
         self.disable()
 
     def enable_autonomous(self):
@@ -44,4 +46,6 @@ class RelayHardware:
 
     def cleanup(self):
         self.disable()
+        # Releases the pins. With HIGH = enabled, released pins leave the
+        # relays de-energized, so the robots stay disabled.
         self._gpio.cleanup()

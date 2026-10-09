@@ -24,6 +24,7 @@ class ServerUnreachable(Exception):
 
 
 def _to_ws_url(server_url):
+    # http -> ws, https -> wss; assume ws if no scheme is given.
     if server_url.startswith("https://"):
         return "wss://" + server_url[len("https://"):]
     if server_url.startswith("http://"):
@@ -52,6 +53,7 @@ class FieldNodeClient:
                 print("Lost connection to server:", e)
                 if self._disconnected_since is None:
                     self._disconnected_since = time.monotonic()
+            # Never leave robots enabled while disconnected.
             self._hardware.disable()
             if (
                 self._disconnected_since is not None
@@ -71,6 +73,8 @@ class FieldNodeClient:
             print("Connected to", self._url)
             self._last_server_contact = time.monotonic()
             self._disconnected_since = None
+            # Run all three together. If any one stops or fails, close the
+            # connection and let run() reconnect.
             tasks = [
                 asyncio.ensure_future(self._heartbeat_loop(ws)),
                 asyncio.ensure_future(self._receive_loop(ws)),
@@ -104,6 +108,7 @@ class FieldNodeClient:
 
     async def _receive_loop(self, ws):
         async for raw in ws:
+            # Any message counts as proof the server is alive.
             self._last_server_contact = time.monotonic()
             try:
                 message = json.loads(raw)
@@ -128,6 +133,7 @@ class FieldNodeClient:
             elif phase == "driver":
                 self._hardware.enable_driver()
             else:
+                # Any other phase (e.g. disabled, ended) is treated as disabled.
                 self._hardware.disable()
         elif msg_type == "estop":
             print("E-stop:", message.get("reason"))

@@ -35,6 +35,7 @@ def _device_session_fragment(cookie):
     to the server, so the token stays out of access logs. Returns "" if the
     cookie isn't in that shape."""
     try:
+        # "rem_session=device:<id>:<token>" -> ["device", "<id>", "<token>"]
         _, device_id, token = cookie.split("=", 1)[1].split(":", 2)
     except (IndexError, ValueError):
         return ""
@@ -52,6 +53,7 @@ def _kiosk_session_status(server_url, cookie):
     except urllib.error.HTTPError as e:
         if e.code in (401, 403):
             return "revoked"
+        # Any other HTTP error still means the server answered.
         return "ok"
     except Exception:
         return "unreachable"
@@ -85,17 +87,21 @@ def _wait_to_be_discovered(launch_kiosk):
         "from the Devices tab's 'Discovered Field Devices' list.".format(hostname, ip_address)
     )
 
+    # Show the hostname/IP on screen so an operator can match this Pi to the
+    # admin's Discovered Field Devices list.
     waiting_chromium = None
     if launch_kiosk:
         waiting_chromium = kiosk.Chromium()
         waiting_chromium.show("file://" + kiosk.write_waiting_page(hostname, ip_address))
 
     try:
+        # Blocks until the server pushes this Pi's credentials.
         server_url, device_id, session_token, role, name = claim_listener.wait_for_claim()
     finally:
         if waiting_chromium is not None:
             waiting_chromium.stop()
 
+    # Same cookie format the server issues on the pairing-code path.
     cookie = "rem_session=device:{}:{}".format(device_id, session_token)
     pairing.save_session(server_url, cookie, role, name)
     print("Claimed as device {} ({}, role={})".format(device_id, name, role))
@@ -103,6 +109,7 @@ def _wait_to_be_discovered(launch_kiosk):
 
 
 def _run_field_node(server_url, cookie, name, launch_kiosk):
+    # Relays are set to disabled as soon as this is created.
     hw = hardware.RelayHardware()
     chromium = kiosk.Chromium() if launch_kiosk else None
     if chromium is not None:
@@ -115,6 +122,7 @@ def _run_field_node(server_url, cookie, name, launch_kiosk):
         ).start()
     client = FieldNodeClient(server_url, cookie, name, hw)
     try:
+        # Runs until the server has been unreachable for GIVE_UP_AFTER_SECONDS.
         asyncio.run(client.run())
     except ServerUnreachable as e:
         #server_url is probably stale, clearing the session makes the next
@@ -124,6 +132,7 @@ def _run_field_node(server_url, cookie, name, launch_kiosk):
     except KeyboardInterrupt:
         pass
     finally:
+        # Always leave the robots disabled on the way out.
         hw.cleanup()
         if chromium is not None:
             chromium.stop()
@@ -140,6 +149,7 @@ def _run_kiosk(server_url, cookie, launch_kiosk):
     ).start()
     unreachable_since = None
     try:
+        # Check in with the server until Chromium exits or we give up.
         while chromium.poll() is None:
             status = _kiosk_session_status(server_url, cookie)
             if status == "revoked":
@@ -149,6 +159,7 @@ def _run_kiosk(server_url, cookie, launch_kiosk):
             if status == "ok":
                 unreachable_since = None
             else:
+                # Start the give-up timer on the first failed check.
                 unreachable_since = unreachable_since or time.monotonic()
                 if time.monotonic() - unreachable_since > KIOSK_GIVE_UP_AFTER_SECONDS:
                     print(
@@ -170,6 +181,8 @@ def main(argv=None):
 
     cached_url, cached_cookie, cached_role, cached_name = pairing.load_session()
 
+    # Credentials come from, in order: an explicit --pair code, the saved
+    # session, or waiting to be claimed over the network.
     try:
         if args.pair:
             server_url = args.server or cached_url

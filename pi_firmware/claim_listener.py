@@ -5,6 +5,8 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+# Must match the port advertised over mDNS (see setup.sh) and the server's
+# CLAIM_PORT.
 CLAIM_PORT = 8765
 
 _REQUIRED_FIELDS = ("server_url", "device_id", "session_token", "role", "name")
@@ -18,7 +20,7 @@ def wait_for_claim():
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
-            pass
+            pass  # silence the default per-request logging
 
         def do_POST(self):
             if self.path != "/claim":
@@ -37,8 +39,11 @@ def wait_for_claim():
             result.update(body)
             self.send_response(204)
             self.end_headers()
+            # Wake up wait_for_claim() now that credentials have arrived.
             claimed.set()
 
+    # Listen on all interfaces: the server pushes to whichever IP it found
+    # this Pi at over mDNS.
     server = HTTPServer(("0.0.0.0", CLAIM_PORT), Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

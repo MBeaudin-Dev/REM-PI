@@ -48,6 +48,7 @@ def pair(server_url, pairing_code):
     except urllib.error.URLError as e:
         raise RuntimeError("could not reach {}: {}".format(url, e.reason))
 
+    # The session token is only sent in the Set-Cookie header, not the body.
     if not set_cookie:
         raise RuntimeError("server did not return a session cookie")
     cookie = set_cookie.split(";", 1)[0]  # drop cookie attributes
