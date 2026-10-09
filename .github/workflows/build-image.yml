@@ -1,0 +1,57 @@
+name: Build Pi image
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage firmware into the image build
+        run: |
+          mkdir -p image/stage-rem/01-firmware/files/rem-pi
+          rsync -a --exclude venv --exclude __pycache__ pi_firmware/ image/stage-rem/01-firmware/files/rem-pi/
+
+      - uses: usimd/pi-gen-action@v1
+        id: build
+        with:
+          image-name: rem-pi
+          release: trixie
+          pi-gen-version: arm64
+          stage-list: stage0 stage1 stage2 ./image/stage-rem
+          # Must match DEFAULT_HOSTNAME in image/stage-rem/02-system/files/rem-hostname.
+          hostname: rem-pi
+          username: rem
+          password: ${{ secrets.REM_PI_PASSWORD }}
+          disable-first-boot-user-rename: 1
+          enable-ssh: 1
+          locale: en_US.UTF-8
+          keyboard-keymap: us
+          keyboard-layout: English (US)
+          timezone: America/New_York
+          wpa-country: US
+          compression: xz
+          increase-runner-disk-size: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rem-pi-image
+          path: ${{ steps.build.outputs.image-path }}
+          compression-level: 0
+          retention-days: 14
+
+      - name: Attach image to the GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --generate-notes \
+            || true
+          gh release upload "${GITHUB_REF_NAME}" "${{ steps.build.outputs.image-path }}" \
+            --repo "${GITHUB_REPOSITORY}" --clobber

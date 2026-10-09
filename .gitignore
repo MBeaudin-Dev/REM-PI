@@ -1,0 +1,4 @@
+image/stage-rem/01-firmware/files/
+__pycache__/
+*.pyc
+venv/
