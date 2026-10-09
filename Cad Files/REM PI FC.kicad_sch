@@ -6,7 +6,9 @@
 	(paper "A4")
 	(title_block
 		(title "REM Pi FC")
-		(date "15 nov 2012")
+		(date "10/9/2026")
+		(rev "1.2")
+		(company "Designed By Matthew Beaudin")
 	)
 	(lib_symbols
 		(symbol "Connector:RJ45_LED_Shielded"
@@ -4249,17 +4251,6 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "Additional pin functions:\nhttps://pinout.xyz/"
-		(exclude_from_sim no)
-		(at 179.07 180.34 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "36e2c557-2c2a-4fba-9b6f-1167ab8ec281")
-	)
 	(text "ID_SD and ID_SC PINS:\nThese pins are reserved for HAT ID EEPROM.\n\nAt boot time this I2C interface will be\ninterrogated to look for an EEPROM\nthat identifes the attached board and\nallows automagic setup of the GPIOs\n(and optionally, Linux drivers).\n\nBridging JP1 enables write protection.\n\nDO NOT USE these pins for anything other\nthan attaching an I2C ID EEPROM. Leave\nunconnected if ID EEPROM not required."
 		(exclude_from_sim no)
 		(at 16.51 193.04 0)
@@ -4380,12 +4371,6 @@
 		(uuid "65d7f781-56bb-4a09-b817-b258eb181f5c")
 	)
 	(junction
-		(at 186.69 99.06)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "69a618b0-fc5e-4484-880b-a40b3fc79386")
-	)
-	(junction
 		(at 203.2 46.99)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4504,6 +4489,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "d654cb66-652c-404a-bc4f-5e3c15f050ba")
+	)
+	(junction
+		(at 186.69 99.06)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d7b02290-414f-45e0-abec-3ef97d58299c")
 	)
 	(junction
 		(at 132.08 95.25)
@@ -7475,7 +7466,6 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "15e915e8-dbf3-47ae-be29-60c3452faa1a")
 		(property "Reference" "#PWR08"
 			(at 207.01 106.68 0)
@@ -7489,7 +7479,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 199.39 106.6799 90)
+			(at 202.692 104.14 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8601,7 +8591,7 @@
 		(dnp no)
 		(uuid "60305904-31e1-4518-b1f5-5a40cb6cb776")
 		(property "Reference" "R6"
-			(at 125.73 24.13 90)
+			(at 135.382 23.876 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8611,7 +8601,7 @@
 			)
 		)
 		(property "Value" "R30"
-			(at 128.27 24.13 90)
+			(at 137.922 24.13 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
