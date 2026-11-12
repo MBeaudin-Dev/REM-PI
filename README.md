@@ -1,13 +1,36 @@
 # REM-PI
 
-Firmware for the Raspberry Pis used by Robot Event Manager. A Pi runs in one
-of two roles, assigned by an admin when it is paired:
+REM-PI turns a Raspberry Pi into a field control box and display for Robot
+Event Manager (REM), a system for running VEX robotics competitions. With its
+relay board wired to the robots on a field, the Pi lets REM start autonomous,
+switch to driver control and stop the robots for each match. A Pi can also run
+as a plain display that shows a REM screen on a TV or monitor.
 
-- **Kiosk**: shows a display page in full-screen Chromium.
-- **Field node**: shows the field display *and* drives the relay HAT that
-  enables, disables and switches the mode of the robots on its field.
+**What you need**
 
-This README covers how the relay HAT works. The code is in
+- A Raspberry Pi (works on the Pi 5) running Raspberry Pi OS Lite, with a
+  screen attached
+- A REM server on the same network
+- For field control: the REM-PI relay board. Its KiCad design, Gerber files
+  and enclosure CAD files are in this repo.
+
+**How it works**
+
+1. Run `pi_firmware/setup.sh` once. It installs what the Pi needs and starts
+   the firmware every time the Pi boots.
+2. The Pi shows its name and IP address on screen and appears in REM's
+   Devices tab under Discovered Field Devices. An admin pairs it there and
+   picks its role:
+   - **Kiosk**: shows a REM display page full screen.
+   - **Field node**: shows the field display *and* drives the relay board
+     that enables, disables and switches the mode of the robots on its field.
+3. If discovery doesn't work on your network, pair by hand with
+   `main.py --server <url> --pair <code>`, using the code from the Devices tab.
+
+If anything goes wrong (the server stops answering, the network drops, or the
+Pi crashes or loses power), the robots are left disabled.
+
+The rest of this README explains how the relay board works. The code is in
 [`pi_firmware/hardware.py`](pi_firmware/hardware.py).
 
 ## The relay HAT
